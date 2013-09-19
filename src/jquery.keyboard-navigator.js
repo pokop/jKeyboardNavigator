@@ -9,14 +9,7 @@
 		
 		return {left: offset.left, right: offset.left + width, top: offset.top, bottom: offset.top + height};
 	}
-	
-	var KEYS = {
-		DOWN: 40,
-		LEFT: 37,
-		UP: 38,
-		RIGHT: 39,
-	};
-	
+
 	$.navigators = {
 		next: function (key, currentSelectedIndex, $items) {
 			return (currentSelectedIndex + 1) % $items.length;
