@@ -4,7 +4,7 @@
 	<title>jQuery Keyboard Navigator Plugin (example)</title>
 </head>
 <style type="text/css">
-	.kn-selected {
+	.kn-container:focus .kn-selected {
 		outline: #66F auto 5px;
 	}
 </style>
@@ -12,8 +12,12 @@
 <script type="text/javascript" src="../src/jquery.keyboard-navigator.js"></script>
 <script type="text/javascript">
 	$(function() {
-		$('ul:eq(0)').keyboardNavigator();
-		$('ul:eq(1)').keyboardNavigator({disableUserAgentOutline: false}).focus();
+		$('ul:eq(0)').keyboardNavigator({
+			disableFocusLostOnTabKeydown: false,
+		});
+		$('ul:eq(1)').keyboardNavigator({
+			disableUserAgentOutline: false,
+		}).focus();
 	});
 </script>
 <body>
