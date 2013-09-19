@@ -6,6 +6,7 @@
             'selector': '>*',
 			'mouseHover': true,
 			'disableUserAgentOutline': true,
+			'disableFocusLostOnTabKeydown': true,
         };
 		
         if (options) {
@@ -13,8 +14,7 @@
 		}
  
         return this.each(function() {
-            var $this = $(this),
-				  $items = $this.find(config.selector);
+            var $this = $(this);
 			
 			// Make sure the tabindex is set for the container, in order to be focusable.
 			if ($this.attr('tabindex') === undefined) {
@@ -23,7 +23,7 @@
 			
 			// disable user agent outline of focus element.
 			if (config.disableUserAgentOutline) {
-					$this.addClass('kn-disable-user-agent-focus');
+				$this.addClass('kn-disable-user-agent-focus');
 			}
 			
 			// Set the focus to the container on mouse hover.
@@ -35,21 +35,22 @@
 				});
 			}
 			
-			$this.keydown(function(e) {
+			$this.addClass('kn-container').keydown(function(e) {
 				console.log(e.which);
 				// TODO: more logic here.
+				
+				if (e.which == 9 && config.disableFocusLostOnTabKeydown) {
+					return false;
+				}
 			}).focus(function() {
-				$this.addClass('kn-focused');
-				$items.first().addClass('kn-selected');
+				//$this.find(config.selector).first().addClass('kn-selected');
 				// TODO: select by logic and not only the first.
 			}).blur(function() {
-				$this.removeClass('kn-focused');
-				$items.removeClass('kn-selected');
+				$this.find(config.selector).removeClass('kn-selected');
+			}).on('mouseenter', config.selector, function() {
+				$this.find(config.selector).removeClass('kn-selected');
+				$(this).addClass('kn-selected');
 			});
-			
-			if ($this.is(':focus')) {
-				$this.addClass('kn-focused');
-			}
         });
     };
 })(jQuery);
