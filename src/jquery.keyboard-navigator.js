@@ -110,6 +110,7 @@
 			disableUserAgentOutline: true,
 			disableFocusLostOnTabKeydown: true,
 			navigator: $.kn.upDown,
+			// TODO: add option to map keys to strings(name of event to trigger) and functions(handlers)
         };
 		
         if (options) {
@@ -181,6 +182,9 @@
 				else if (e.which == 9 && config.disableFocusLostOnTabKeydown) {
 					return false;
 				}
+				// TODO: if the key is in the configurable mapping, trigger the event/handler.
+				// TODO: if the key is registered on inner item of the selected item as event-name or handler, trigger it.
+				
 			}).focus(function() {
 				//$this.find(config.selector).first().addClass('kn-selected');
 			}).blur(function() {
