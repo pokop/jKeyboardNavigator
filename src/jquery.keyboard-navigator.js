@@ -9,33 +9,17 @@
 		
 		return {left: offset.left, right: offset.left + width, top: offset.top, bottom: offset.top + height};
 	}
-
-	$.navigators = {
-		next: function (key, currentSelectedIndex, $items) {
-			return (currentSelectedIndex + 1) % $items.length;
-		},
-		prev: function (key, currentSelectedIndex, $items) {
-			if (currentSelectedIndex == -1) {
-				currentSelectedIndex = 0;
-			}
-			return (currentSelectedIndex + $items.length - 1) % $items.length;
-		},
-		first: function (key, currentSelectedIndex, $items) {
-			return 0;
-		},
-		last: function (key, currentSelectedIndex, $items) {
-			return $items.length - 1;
-		},
-		// TODO: add more navigators.
-	};
 	
 	function keyToStr(e) {
 		switch (e.which) {
+			case 33: return 'pageUp';
+			case 34: return 'pageDown';
+			case 35: return 'end';
+			case 36: return 'home';
 			case 37: return 'left';
 			case 38: return 'up';
 			case 39: return 'right';
 			case 40: return 'down';
-			// TODO: add page-down, page-up, end, home
 		}
 		
 		return '';
@@ -80,21 +64,87 @@
 		};
 	}());
 	
-	$.kn = $keyboardNavigators = {
-		upDown: {
+	function KeyboardNavigator(keyMapping) {
+		if (arguments.length == 1 && !(keyMapping instanceof KeyboardNavigator)) {
+			this.keyMapping = keyMapping;
+		} else {
+			this.keyMapping = {};
+			for (var i=0; i < arguments.length; i++) {
+				var arg = arguments[i];
+				if (arg instanceof KeyboardNavigator) {
+					arg = arg.keyMapping;
+				}
+				$.extend(this.keyMapping, arg);
+			}
+		}
+	}
+	KeyboardNavigator.prototype.and = function(kn) {
+		if (kn instanceof KeyboardNavigator) {
+			kn = kn.keyMapping;
+		}
+		res = {};
+		$.extend(res, kn);
+		$.extend(res, this.keyMapping);
+		return new KeyboardNavigator(res);
+	}
+	
+	var KN = KeyboardNavigator,
+	navigators = $.navigators = {
+		next: function (key, currentSelectedIndex, $items) {
+			return (currentSelectedIndex + 1) % $items.length;
+		},
+		next5: function (key, currentSelectedIndex, $items) {
+			return Math.min(currentSelectedIndex + 5, $items.length - 1);
+		},
+		prev: function (key, currentSelectedIndex, $items) {
+			if (currentSelectedIndex == -1) {
+				currentSelectedIndex = 0;
+			}
+			return (currentSelectedIndex + $items.length - 1) % $items.length;
+		},
+		prev5: function (key, currentSelectedIndex, $items) {
+			return Math.max(currentSelectedIndex - 5, 0);
+		},
+		first: function (key, currentSelectedIndex, $items) {
+			return 0;
+		},
+		last: function (key, currentSelectedIndex, $items) {
+			return $items.length - 1;
+		},
+		// TODO: add more navigators.
+	},
+	kn = $.kn = $.keyboardNavigators = {
+		upDown: new KN({
 			up: $.navigators.prev,
 			down: $.navigators.next,
-		},
-		leftRight: {
+		}),
+		leftRight: new KN({
 			left: $.navigators.prev,
 			right: $.navigators.next,
-		},
-		rightLeft: {
+		}),
+		rightLeft: new KN({
 			right: $.navigators.prev,
 			left: $.navigators.next,
-		}
+		}),
+		home: new KN({
+			home: $.navigators.first,
+		}),
+		end: new KN({
+			end: $.navigators.last,
+		}),
+		pageUp5: new KN({
+			pageUp: $.navigators.prev5,
+		}),
+		pageDown5: new KN({
+			pageDown: $.navigators.next5,
+		}),
 		// TODO: add more pre-configurations for common uses.
-	}
+	};
+	kn.homeEnd = new KN(kn.home, kn.end);
+	kn.pageUpDown5 = new KN(kn.pageUp5, kn.pageDown5);
+	kn.upDownHomeEnd = new KN(kn.homeEnd, kn.upDown);
+	kn.leftRightHomeEnd = new KN(kn.homeEnd, kn.leftRight);
+	kn.rightLeftHomeEnd = new KN(kn.homeEnd, kn.rightLeft);
 	
     $.fn.kn = $.fn.keyboardNavigator = function(options) {
         var config = {
@@ -102,7 +152,7 @@
 			mouseHover: true,
 			disableUserAgentOutline: true,
 			disableFocusLostOnTabKeydown: true,
-			navigator: $.kn.upDown,
+			navigator: new KN(kn.upDownHomeEnd, kn.pageUpDown),
 			mouseClick: true,
 			selectByMouseHover: true,
 			// TODO: add option to map keys to strings(name of event to trigger) and functions(handlers)
@@ -141,7 +191,7 @@
 				
 				// If the key is an arrow key.
 				// TODO: implement logic for holded ctrl support.
-				if ($.inArray(keyToStr(e), keys(config.navigator)) != -1) {
+				if ($.inArray(keyToStr(e), keys(config.navigator.keyMapping)) != -1) {
 					var $newSelected, currentIndex = -1,
 					
 						// Get the items.
@@ -158,7 +208,7 @@
 					}
 					
 					// TODO: implement logic for holded ctrl support.
-					ret = config.navigator[keyToStr(e)].call(this, e.which, currentIndex, $items);
+					ret = config.navigator.keyMapping[keyToStr(e)].call(this, e.which, currentIndex, $items);
 					
 					if (ret === undefined || ret === -1) {
 						$newSelected = $();
