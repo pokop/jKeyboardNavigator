@@ -88,7 +88,7 @@
 		return new KeyboardNavigator(res);
 	}
 	
-	var KN = KeyboardNavigator,
+	var KN = $.KN = KeyboardNavigator,
 	navigators = $.navigators = {
 		next: function (key, currentSelectedIndex, $items) {
 			return (currentSelectedIndex + 1) % $items.length;
@@ -111,7 +111,7 @@
 		last: function (key, currentSelectedIndex, $items) {
 			return $items.length - 1;
 		},
-		// TODO: add more navigators.
+		// TODO: add dynamic DOM location navigators.
 	},
 	kn = $.kn = $.keyboardNavigators = {
 		upDown: new KN({
@@ -152,7 +152,7 @@
 			mouseHover: true,
 			disableUserAgentOutline: true,
 			disableFocusLostOnTabKeydown: true,
-			navigator: new KN(kn.upDownHomeEnd, kn.pageUpDown),
+			navigator: new KN(kn.upDownHomeEnd, kn.pageUpDown5),
 			mouseClick: true,
 			selectByMouseHover: true,
 			// TODO: add option to map keys to strings(name of event to trigger) and functions(handlers)
