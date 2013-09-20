@@ -195,8 +195,10 @@
 				$(this).addClass('kn-hover');
 			}).on('mouseleave', config.selector, function () {
 				$(this).removeClass('kn-hover');
-			}).on('DOMSubtreeModified', function () {
-				if (isSelectedPermanently && $this.find(config.selector).filter('.kn-selected').length == 0) {
+			}).on('DOMNodeRemoved', function (e) {
+				// This event is not supported in all browsers, but it better to have it where it is supported than not implmenet it at all.
+				// If the selected item is removed from the DOM, clear the isSelectedPermanently flag.
+				if (isSelectedPermanently && ($(e.target).find('.kn-selected').length > 0 || $(e.target).hasClass('kn-selected'))) {
 					isSelectedPermanently = false;
 				}
 			});
