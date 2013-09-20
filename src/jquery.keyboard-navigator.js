@@ -195,6 +195,10 @@
 				$(this).addClass('kn-hover');
 			}).on('mouseleave', config.selector, function () {
 				$(this).removeClass('kn-hover');
+			}).on('DOMSubtreeModified', function () {
+				if (isSelectedPermanently && $this.find(config.selector).filter('.kn-selected').length == 0) {
+					isSelectedPermanently = false;
+				}
 			});
 			
 			if (config.mouseClick) {
