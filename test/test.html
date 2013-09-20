@@ -7,6 +7,12 @@
 	.kn-container:focus .kn-selected {
 		outline: #66F auto 5px;
 	}
+	
+	.kn-container:focus .kn-hover {
+		background: rgb(102, 102, 255); /* Fall-back for browsers that don't
+                                    support rgba */
+		background: rgba(102, 102, 255, .1);
+	}
 </style>
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
 <script type="text/javascript" src="../src/jquery.keyboard-navigator.js"></script>

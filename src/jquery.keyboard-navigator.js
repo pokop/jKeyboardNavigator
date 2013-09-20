@@ -103,6 +103,7 @@
 			disableUserAgentOutline: true,
 			disableFocusLostOnTabKeydown: true,
 			navigator: $.kn.upDown,
+			mouseClick: true,
 			// TODO: add option to map keys to strings(name of event to trigger) and functions(handlers)
         };
 		
@@ -111,7 +112,7 @@
 		}
  
         return this.each(function() {
-            var $this = $(this);
+            var $this = $(this), isSelectedPermanently = false;
 			
 			// Make sure the tabindex is set for the container, in order to be focusable.
 			if ($this.attr('tabindex') === undefined) {
@@ -128,7 +129,9 @@
 				$this.hover(function() {
 					$this.focus();
 				}, function() {
-					$this.blur();
+					if (!isSelectedPermanently) {
+						$this.blur();
+					}
 				});
 			}
 			
@@ -183,10 +186,28 @@
 			}).blur(function() {
 				//$this.find(config.selector).removeClass('kn-selected');
 			}).on('mouseenter', config.selector, function() {
-				// TODO: scroll to the selected element is he is not fully visible.
-				$this.find(config.selector).removeClass('kn-selected');
-				$(this).addClass('kn-selected');
+				if (!isSelectedPermanently) {
+					// TODO: scroll to the selected element is he is not fully visible.
+					$this.find(config.selector).removeClass('kn-selected');
+					$(this).addClass('kn-selected');
+				}
+				$(this).addClass('kn-hover');
+			}).on('mouseleave', config.selector, function () {
+				$(this).removeClass('kn-hover');
 			});
+			
+			if (config.mouseClick) {
+				$this.on('click', config.selector, function () {
+					if (!isSelectedPermanently || !$(this).hasClass('kn-selected')) {
+						$this.find(config.selector).removeClass('kn-selected');
+						$(this).addClass('kn-selected');
+						isSelectedPermanently = true;
+					} else {
+						$this.find(config.selector).removeClass('kn-selected');
+						isSelectedPermanently = false;
+					}
+				});
+			}
         });
     };
 })(jQuery);
