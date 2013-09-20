@@ -104,6 +104,7 @@
 			disableFocusLostOnTabKeydown: true,
 			navigator: $.kn.upDown,
 			mouseClick: true,
+			selectByMouseHover: true,
 			// TODO: add option to map keys to strings(name of event to trigger) and functions(handlers)
         };
 		
@@ -186,7 +187,7 @@
 			}).blur(function() {
 				//$this.find(config.selector).removeClass('kn-selected');
 			}).on('mouseenter', config.selector, function() {
-				if (!isSelectedPermanently) {
+				if (!isSelectedPermanently && config.selectByMouseHover) {
 					// TODO: scroll to the selected element is he is not fully visible.
 					$this.find(config.selector).removeClass('kn-selected');
 					$(this).addClass('kn-selected');
