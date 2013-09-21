@@ -14,7 +14,10 @@
 		background: rgba(102, 102, 255, .1);
 	}
 	
-	.inlineUl li{
+	.inlineUl {
+		width: 130px;
+	}
+	.inlineUl li {
 		display: inline-block;
 	}
 </style>
@@ -24,7 +27,7 @@
 	$(function() {
 		$('ul:eq(0)').keyboardNavigator({
 			disableFocusLostOnTabKeydown: false,
-			navigator: new $.KN($.kn.leftRightHomeEnd, $.kn.pageUpDown5)
+			navigator: $.kn.location,
 		});
 		$('ul:eq(1)').keyboardNavigator({
 			disableUserAgentOutline: false,
