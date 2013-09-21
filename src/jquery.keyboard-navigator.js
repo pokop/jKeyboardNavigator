@@ -1,78 +1,86 @@
 (function($){
 	$("<style type='text/css'> .kn-disable-user-agent-focus:focus{ outline: none; } </style>").appendTo("head");
 
-	function getPosition(element) {
-		var $element = $(element),
-			offset = $element.offset(),
-			height = $element.height(),
-			width = $element.width();
-		
-		return {height: height, width: width, left: offset.left, right: offset.left + width, top: offset.top, bottom: offset.top + height, center: {x: offset.left + width / 2, y: offset.top + height / 2}};
-	}
+	var getElementByDirection = (function() {
+		var OVERLOOP = 10000000, MIN_RATIO = 0.2;
 	
-	function calcDistance(selectedPos, pos, direction) {
-		var OVERLOOP = 10000000, res;
-		// If direction down.
-		switch (direction) {
-		case 1: // left
-			res = selectedPos.center.x - pos.center.x;
-			break;
-		case 2: // up
-			res = selectedPos.center.y - pos.center.y;
-			break;
-		case 3: // right
-			res = pos.center.x - selectedPos.center.x;
-			break;
-		case 4: // down
-			res = pos.center.y - selectedPos.center.y;
-			break;
+		function getPosition(element) {
+			var $element = $(element),
+				offset = $element.offset(),
+				height = $element.height(),
+				width = $element.width();
+			
+			return {height: height, width: width, left: offset.left, right: offset.left + width, top: offset.top, bottom: offset.top + height, center: {x: offset.left + width / 2, y: offset.top + height / 2}};
 		}
 		
-		if (res < 0) {
-			return res + OVERLOOP;
-		}
-		return res;
-	}
-	
-	function calcRatio(selectedPos, pos, direction) {
-		// TODO: refactoring.
-		// If direction left/right.
-		if ((direction & 1) === 1) {
-			var maxTop = Math.max(pos.top, selectedPos.top),
-				  minBottom = Math.min(pos.bottom, selectedPos.bottom),
-				  intersect = minBottom - maxTop,
-				  minHeight = Math.min(pos.height, selectedPos.height),
-				  ratio = intersect / minHeight;
-			return ratio;
-		} else { // If direction up/down.
-			var maxLeft = Math.max(pos.left, selectedPos.left),
-				  minRight = Math.min(pos.right, selectedPos.right),
-				  intersect = minRight - maxLeft,
-				  minWidth = Math.min(pos.width, selectedPos.width),
-				  ratio = intersect / minWidth;
-			return ratio;
-		}
-	}
-	
-	function getElementByDirection(currentSelectedIndex, $items, direction) {
-		var MIN_RATIO = 0.3, minDistance = Number.MAX_VALUE, minIndex = -1,
-			  selectedPos = getPosition($items.eq(currentSelectedIndex));
-		$items.each(function (index) {
-			var pos = getPosition(this);
-			if (calcRatio(selectedPos, pos, direction) >= MIN_RATIO) {
-				var distance = calcDistance(selectedPos, pos, direction);
-				if (distance < minDistance && index != currentSelectedIndex) {
-					minDistance = distance;
-					minIndex = index;
-				}
+		function calcDistance(selectedPos, pos, direction) {
+			var res;
+			// If direction down.
+			switch (direction) {
+			case 1: // left
+				res = selectedPos.center.x - pos.center.x;
+				break;
+			case 2: // up
+				res = selectedPos.center.y - pos.center.y;
+				break;
+			case 3: // right
+				res = pos.center.x - selectedPos.center.x;
+				break;
+			case 4: // down
+				res = pos.center.y - selectedPos.center.y;
+				break;
 			}
-		});
-		// If there is no element in this direction, stay at the current element.
-		if (minIndex === -1) {
-			return currentSelectedIndex;
+			
+			if (res < 0) {
+				return res + OVERLOOP;
+			}
+			return res;
 		}
-		return minIndex;
-	}
+		
+		function calcRatio(selectedPos, pos, direction) {
+			// TODO: refactoring.
+			// If direction left/right.
+			if ((direction & 1) === 1) {
+				var maxTop = Math.max(pos.top, selectedPos.top),
+					  minBottom = Math.min(pos.bottom, selectedPos.bottom),
+					  intersect = minBottom - maxTop,
+					  minHeight = Math.min(pos.height, selectedPos.height),
+					  ratio = intersect / minHeight;
+				return ratio;
+			} else { // If direction up/down.
+				var maxLeft = Math.max(pos.left, selectedPos.left),
+					  minRight = Math.min(pos.right, selectedPos.right),
+					  intersect = minRight - maxLeft,
+					  minWidth = Math.min(pos.width, selectedPos.width),
+					  ratio = intersect / minWidth;
+				return ratio;
+			}
+		}
+		
+		return (
+			function (currentSelectedIndex, $items, direction, useOverLoop) {
+				var minDistance = Number.MAX_VALUE, minIndex = -1,
+					  selectedPos = getPosition($items.eq(currentSelectedIndex));
+				$items.each(function (index) {
+					var pos = getPosition(this);
+					if (calcRatio(selectedPos, pos, direction) >= MIN_RATIO) {
+						var distance = calcDistance(selectedPos, pos, direction);
+						if (distance < minDistance && index != currentSelectedIndex) {
+							if (useOverLoop || distance < OVERLOOP / 2) {
+								minDistance = distance;
+								minIndex = index;
+							}
+						}
+					}
+				});
+				// If there is no element in this direction, stay at the current element.
+				if (minIndex === -1) {
+					return currentSelectedIndex;
+				}
+				return minIndex;
+			}
+		);
+	})();
 	
 	function keyToStr(e) {
 		switch (e.which) {
@@ -180,16 +188,28 @@
 		* Dynamic DOM location navigators *
 		****************************/
 		left: function (key, currentSelectedIndex, $items) {
-			return getElementByDirection(currentSelectedIndex, $items, 1);
+			return getElementByDirection(currentSelectedIndex, $items, 1, true);
 		},
 		up: function (key, currentSelectedIndex, $items) {
-			return getElementByDirection(currentSelectedIndex, $items, 2);
+			return getElementByDirection(currentSelectedIndex, $items, 2, true);
 		},
 		right: function (key, currentSelectedIndex, $items) {
-			return getElementByDirection(currentSelectedIndex, $items, 3);
+			return getElementByDirection(currentSelectedIndex, $items, 3, true);
 		},
 		down: function (key, currentSelectedIndex, $items) {
-			return getElementByDirection(currentSelectedIndex, $items, 4);
+			return getElementByDirection(currentSelectedIndex, $items, 4, true);
+		},
+		leftNoOverLoop: function (key, currentSelectedIndex, $items) {
+			return getElementByDirection(currentSelectedIndex, $items, 1, false);
+		},
+		upNoOverLoop: function (key, currentSelectedIndex, $items) {
+			return getElementByDirection(currentSelectedIndex, $items, 2, false);
+		},
+		rightNoOverLoop: function (key, currentSelectedIndex, $items) {
+			return getElementByDirection(currentSelectedIndex, $items, 3, false);
+		},
+		downNoOverLoop: function (key, currentSelectedIndex, $items) {
+			return getElementByDirection(currentSelectedIndex, $items, 4, false);
 		},
 	},
 	kn = $.kn = $.keyboardNavigators = {
@@ -223,6 +243,12 @@
 			left: navigators.left,
 			right: navigators.right,
 		}),
+		locationNoOverLoop: new KN({
+			up: navigators.upNoOverLoop,
+			down: navigators.downNoOverLoop,
+			left: navigators.leftNoOverLoop,
+			right: navigators.rightNoOverLoop,
+		}),
 		// TODO: add more pre-configurations for common uses.
 	};
 	kn.homeEnd = new KN(kn.home, kn.end);
@@ -240,15 +266,30 @@
 			navigator: new KN(kn.upDownHomeEnd, kn.pageUpDown5),
 			mouseClick: true,
 			selectByMouseHover: true,
+			onSelectChange: undefined,
 			// TODO: add option to map keys to strings(name of event to trigger) and functions(handlers)
         };
 		
-        if (options) {
+		if (options) {
 			$.extend(config, options);
 		}
  
         return this.each(function() {
             var $this = $(this), isSelectedPermanently = false;
+			
+			function setSelected(newSelected) {
+				var isChanged = !$(newSelected).hasClass('kn-selected');
+				
+				$this.find(config.selector).removeClass('kn-selected');
+				$(newSelected).addClass('kn-selected');
+				
+				// TODO: scroll to the selected element is he is not fully visible. control the scroll by config: {None, regular, animated}.
+				
+				if (isChanged && config.onSelectChange) {
+					// Trigger the selectChange event.
+					config.onSelectChange.call(this, $(newSelected));
+				}
+			}
 			
 			// Make sure the tabindex is set for the container, in order to be focusable.
 			if ($this.attr('tabindex') === undefined) {
@@ -285,9 +326,6 @@
 						// Get the selected item.
 						$selected = $items.filter('.kn-selected');
 					
-					//var positions = $items.map(getPosition).get();
-					//console.log(positions);
-					
 					if ($selected.length > 0) {
 						currentIndex = $.inArray($selected[0], $items);
 					}
@@ -305,8 +343,7 @@
 						$newSelected = $(ret);
 					}
 					
-					$selected.removeClass('kn-selected');
-					$newSelected.addClass('kn-selected');
+					setSelected($newSelected);
 					
 					return false;
 				}
@@ -323,9 +360,7 @@
 				//$this.find(config.selector).removeClass('kn-selected');
 			}).on('mouseenter', config.selector, function() {
 				if (!isSelectedPermanently && config.selectByMouseHover) {
-					// TODO: scroll to the selected element is he is not fully visible.
-					$this.find(config.selector).removeClass('kn-selected');
-					$(this).addClass('kn-selected');
+					setSelected(this);
 				}
 				$(this).addClass('kn-hover');
 			}).on('mouseleave', config.selector, function () {
@@ -341,8 +376,7 @@
 			if (config.mouseClick) {
 				$this.on('click', config.selector, function () {
 					if (!isSelectedPermanently || !$(this).hasClass('kn-selected')) {
-						$this.find(config.selector).removeClass('kn-selected');
-						$(this).addClass('kn-selected');
+						setSelected(this);
 						isSelectedPermanently = true;
 					} else {
 						$this.find(config.selector).removeClass('kn-selected');

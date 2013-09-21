@@ -30,6 +30,10 @@
 			navigator: $.kn.location,
 		});
 		$('ul:eq(1)').keyboardNavigator({
+			disableFocusLostOnTabKeydown: false,
+			navigator: $.kn.locationNoOverLoop,
+		});
+		$('ul:eq(2)').keyboardNavigator({
 			disableUserAgentOutline: false,
 		}).focus();
 	});
@@ -43,6 +47,17 @@
 		<li><span>item 5</span></li>
 		<li><span>item 6</span></li>
 		<li><span>item 7</span></li>
+	</ul>
+	
+	<ul class="inlineUl">
+		<li><span>item 1</span></li>
+		<li><span>item 2</span></li>
+		<li><span>item 3</span></li>
+		<li><span>item 4</span></li>
+		<li><span>item 5</span></li>
+		<li><span>item 6</span></li>
+		<li><span>item 7</span></li>
+		<li><span>item 8</span></li>
 	</ul>
 	
 	<ul tabindex="1">
