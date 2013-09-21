@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>jQuery Keyboard Navigator Plugin (example)</title>
+</head>
+<style type="text/css">
+	.kn-container {
+		position: relative;
+		height: 600px;
+		width: 1000px;
+		border: 1px solid;
+	}
+	
+	.kn-container * {
+		background: red;
+		display: inline-block;
+		position: absolute;
+	}
+	
+	.kn-container .kn-selected {
+		background: blue;
+	}
+	
+	.kn-container.paused * {
+		display: none;
+	}
+	
+	.kn-container.paused {
+		background: green;
+	}
+</style>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<script type="text/javascript" src="../src/jquery.keyboard-navigator.js"></script>
+<script type="text/javascript">
+	function rand(a, b) {	
+		return Math.floor(Math.random() * (b - a)) + a;
+	}
+
+	$(function() {
+		var isPaused = false, $parent = $('<div></div>').appendTo('body').keyboardNavigator({
+			navigator: $.kn.locationNoOverLoop,
+			selectByMouseHover: false,
+			mouseClick: false,
+		}).focus(),
+		w = $parent.width()
+		h = $parent.height(),
+		maxSize = 100,
+		minSize = 30,
+		i = rand(5, 8);
+		while (i--) {
+			$('<span></span>').css({
+				width: rand(minSize, maxSize),
+				height: rand(minSize, maxSize),
+				left: rand(maxSize, w - maxSize),
+				top: rand(maxSize, h - maxSize),
+			}).appendTo($parent).data({
+				speedX: rand(200, 400),  // The distance in the x asix in 1 second.
+				speedY: rand(200, 400), // The distance in the y asix in 1 second.
+				dirX: rand(0, 2) * 2 - 1,
+				dirY: rand(0, 2) * 2 - 1,
+			});
+		}
+		
+		// Start the game on click
+		$parent.one('click', function() {
+			$parent.find('>*').first().addClass('kn-selected').end().each(step(false)).end().focus().hover(function() {
+				if (isPaused) {
+					isPaused = false;
+					$parent.removeClass('paused').find('>*').each(step(false));
+				}
+			}, function() {
+				$parent.addClass('paused').find('>*').stop();
+				isPaused = true;
+			});
+		});
+		
+		function step(doPrograss) {
+			return function () {
+				var $this = $(this), 
+					  x = $this.position().left, 
+					  y = $this.position().top, 
+					  speedX = $this.data('speedX'), 
+					  speedY = $this.data('speedY'),
+					  dirX = $this.data('dirX'), 
+					  dirY = $this.data('dirY'),
+					  width = $this.width(),
+					  height = $this.height(),
+					  distanceX, distanceY, time, targetX, targetY;
+				
+				if (dirX > 0) {
+					distanceX = w - (x + width);
+					targetX = w - width;
+				} else {
+					distanceX = x;
+					targetX = 0;
+				}
+				
+				if (dirY > 0) {
+					distanceY = h - (y + height);
+					targetY = h - height;
+				} else {
+					distanceY = y;
+					targetY = 0;
+				}
+				
+				// If the x asix move gonna end first.
+				if (distanceX / speedX < distanceY / speedY) {
+					time = 1000 * distanceX / speedX;
+					targetY += dirY * ((distanceX / speedX * speedY) - distanceY);
+					
+					if (doPrograss) {
+						// Change the direction in the correct asix.
+						$this.data({dirX: -dirX});
+					}
+				} else {
+					time = 1000 * distanceY / speedY;
+					targetX += dirX * ((distanceY / speedY * speedX) - distanceX);
+					
+					if (doPrograss) {
+						// Change the direction in the correct asix.
+						$this.data({dirY: -dirY});
+					}
+				}
+				
+				$this.animate({left: targetX, top: targetY}, time, 'linear', step(true));
+			};
+		}
+	});
+</script>
+<body>
+</body>
+</html>
